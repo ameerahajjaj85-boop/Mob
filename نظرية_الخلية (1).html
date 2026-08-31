@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظرية الخلية</title>
+<style>
+  :root{
+    --cell:#b5468f; --cell-light:rgba(181,70,143,0.16);
+    --tissue:#4a90d9; --organ:#e0a13c; --system:#4cc98a;
+    --carb:#d9534f; --protein:#9a7bd1; --fat:#e0873c; --nucleic:#20c3c3;
+    --ink:#f3e9f0; --muted:#bda4b5; --bg:#1a0f17; --card:#241826;
+    --accent:#b5468f; --accent2:#4cc98a; --good:#4cc98a; --bad:#ff7a6b; --radius:16px;
+    --line:rgba(255,255,255,0.12); --surface:rgba(255,255,255,0.05);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; font-family:"Tahoma","Segoe UI",Arial,sans-serif; background:var(--bg); color:var(--ink); line-height:1.8;}
+  header{background:linear-gradient(135deg,#4a1c3a,#7a2f5f); color:#fff; padding:26px 20px 22px; text-align:center;}
+  header .eyebrow{font-size:14px; opacity:.85; margin-bottom:6px;}
+  header h1{margin:0 0 4px; font-size:26px;}
+  header .sub{font-size:15px; opacity:.9;}
+  nav.tabs{display:flex; max-width:1000px; margin:18px auto 0; gap:8px; padding:0 16px; flex-wrap:wrap; justify-content:center;}
+  nav.tabs button{flex:1 1 130px; padding:11px 8px; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--ink); font-size:13.5px; font-weight:bold; cursor:pointer;}
+  nav.tabs button.active{background:var(--accent); color:#1a0f17; border-color:var(--accent);}
+  main{max-width:1000px; margin:20px auto 60px; padding:0 16px;}
+  section.tab{display:none;}
+  section.tab.active{display:block;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin-bottom:18px;}
+  h2.section-title{display:block; margin:0 0 14px; padding:10px 16px; font-size:19px; font-weight:bold; color:var(--accent); background:var(--cell-light); border-radius:10px; border:1px solid rgba(181,70,143,0.35);}
+  h3.sub-title{display:block; margin:22px 0 10px; padding:8px 14px; font-size:15.5px; font-weight:bold; color:var(--accent2); background:rgba(76,201,138,0.12); border-radius:8px; border:1px solid rgba(76,201,138,0.3);}
+  p.hint{color:var(--muted); font-size:14px; margin:0 0 16px;}
+  .definition-box{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:6px 0 16px; font-size:14.5px;}
+
+  .needs-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; margin:14px 0;}
+  .need-card{background:rgba(181,70,143,0.1); border:1px solid rgba(181,70,143,0.25); border-radius:12px; padding:12px 10px; text-align:right;}
+  .need-card b{color:var(--accent); font-size:13.5px;}
+  .need-card p{margin:4px 0 0; font-size:12.5px; color:var(--ink);}
+
+  .group-card{border-radius:12px; padding:14px 16px; margin:10px 0; border:1px solid var(--line);}
+  .group-card h4{margin:0 0 8px; font-size:16px; display:flex; align-items:center; gap:8px;}
+  .group-card p{margin:0 0 8px; font-size:14px;}
+  .group-card .sub{margin-top:8px; font-size:13.5px; color:var(--muted);}
+
+  .flow-wrap{display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:6px; margin:16px 0;}
+  .flow-stage{flex:1 1 100px; max-width:140px; background:var(--surface); border:2px solid var(--line); border-radius:12px; padding:10px 6px; text-align:center; font-size:12.5px; font-weight:bold;}
+  .flow-arrow{font-size:20px; color:var(--muted);}
+
+  .pie-legend{display:flex; flex-wrap:wrap; gap:10px; margin:14px 0; justify-content:center;}
+  .pie-item{display:flex; align-items:center; gap:6px; font-size:13px; background:var(--surface); padding:6px 12px; border-radius:20px; border:1px solid var(--line);}
+  .pie-dot{width:12px; height:12px; border-radius:50%; display:inline-block;}
+
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin:14px 0;}
+  .chip{padding:9px 14px; border-radius:20px; background:var(--surface); color:var(--ink); cursor:pointer; font-size:14px; border:2px solid var(--line); user-select:none;}
+  .chip.selected{border-color:var(--accent); background:rgba(181,70,143,0.18);}
+  .chip.placed{opacity:.35; pointer-events:none; text-decoration:line-through;}
+  .zones{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;}
+  .zone{flex:1 1 150px; min-height:90px; border:2px dashed var(--line); border-radius:12px; padding:10px; text-align:center; cursor:pointer; background:var(--surface);}
+  .zone h4{margin:0 0 8px; font-size:12.5px; color:var(--muted);}
+  .zone .placedItem{display:inline-block; margin:3px; padding:5px 10px; border-radius:14px; font-size:12px; background:var(--card); border:1px solid var(--line); color:var(--ink);}
+  .zone .placedItem.correct{background:rgba(76,201,138,0.18); color:var(--good); border-color:rgba(76,201,138,0.4);}
+  .zone .placedItem.wrong{background:rgba(255,122,107,0.18); color:var(--bad); border-color:rgba(255,122,107,0.4);}
+  .sortStatus{margin-top:10px; font-size:14px; font-weight:bold; color:var(--accent);}
+
+  .action-btn, .reveal-btn, .print-btn{background:var(--accent); color:#1a0f17; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-size:14px; font-weight:bold; margin-top:6px; margin-left:8px;}
+  .print-btn{background:var(--accent2); color:#0e2318;}
+
+  .feedback-box{display:none; margin-top:12px; padding:12px 14px; border-radius:10px; font-size:14px; background:var(--cell-light); border:1px solid rgba(181,70,143,0.35);}
+  .feedback-box.show{display:block;}
+
+  .ws-q{margin-bottom:18px;}
+  .ws-q label{display:block; font-weight:bold; margin-bottom:6px; color:var(--ink);}
+  .ws-q input[type=text], .ws-q textarea{width:100%; padding:9px 10px; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:14px; background:var(--surface); color:var(--ink);}
+  .ws-q textarea{min-height:60px; resize:vertical;}
+  table.match{width:100%; border-collapse:collapse; margin-top:8px;}
+  table.match th, table.match td{border:1px solid var(--line); padding:8px 10px; font-size:13.5px; text-align:right; color:var(--ink);}
+  table.match th{background:var(--surface);}
+  .answers{display:none; margin-top:10px; background:var(--cell-light); border:1px solid rgba(181,70,143,0.35); padding:12px 14px; border-radius:10px; font-size:14px; color:var(--ink);}
+  .answers.show{display:block;}
+
+  #quizArea .qcount{color:var(--muted); font-size:13px; margin-bottom:6px;}
+  #quizArea h3{margin:0 0 14px; font-size:18px; color:var(--ink);}
+  .opt{display:block; width:100%; text-align:right; padding:12px 14px; margin-bottom:8px; border:2px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); cursor:pointer; font-size:14.5px; font-family:inherit;}
+  .opt.correct{border-color:var(--good); background:rgba(76,201,138,0.2); color:var(--good);}
+  .opt.wrong{border-color:var(--bad); background:rgba(255,122,107,0.2); color:var(--bad);}
+  .opt:disabled{cursor:default;}
+  #quizFeedback{margin:10px 0; font-weight:bold; min-height:20px;}
+  #quizFeedback.good{color:var(--good);}
+  #quizFeedback.bad{color:var(--bad);}
+  #nextBtn{display:none;}
+  #scoreScreen{display:none; text-align:center;}
+  #scoreScreen .big{font-size:42px; font-weight:bold; color:var(--accent); margin:10px 0;}
+  .progressbar{height:8px; background:var(--surface); border-radius:6px; overflow:hidden; margin-bottom:16px;}
+  .progressbar > div{height:100%; background:var(--accent); width:0%; transition:.3s;}
+
+  /* --- osmosis simulation --- */
+  .sim-wrap{display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin:20px 0;}
+  .beaker{width:170px; text-align:center;}
+  .beaker-label{font-weight:bold; font-size:14px; margin-bottom:8px; color:var(--accent2);}
+  .beaker-svg-wrap{background:var(--surface); border:1px solid var(--line); border-radius:0 0 16px 16px; border-top:4px solid var(--muted); padding:12px 8px 18px; position:relative; height:210px; display:flex; align-items:flex-end; justify-content:center;}
+  .potato-slice{background:radial-gradient(circle at 35% 35%, #f0dca0, #d9b45c); border:2px solid #b08a3f; border-radius:50%; transition: all 1.2s ease-in-out; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold; color:#5a4420;}
+  .sim-readout{margin-top:10px; font-size:13px; color:var(--ink);}
+  .sim-readout b{color:var(--accent2);}
+  .sim-controls{display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin:14px 0;}
+  .sim-stage-label{text-align:center; font-weight:bold; color:var(--accent); margin-bottom:6px; font-size:14px;}
+  table.simtable{width:100%; border-collapse:collapse; margin-top:14px;}
+  table.simtable th, table.simtable td{border:1px solid var(--line); padding:6px 8px; font-size:12.5px; text-align:center; color:var(--ink);}
+  table.simtable th{background:var(--surface);}
+
+  @media print{
+    header, nav.tabs, .print-btn, .reveal-btn{display:none !important;}
+    section.tab{display:block !important;}
+    #tab-act, #tab-sim, #tab-osmosis, #tab-quiz, #tab-intro{display:none !important;}
+    body{background:#fff; color:#000;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">مادة العلوم - الفصل الأول - الدرس الأول</div>
+  <h1>نظرية الخلية</h1>
+  <div class="sub">محتوى الدرس + نشاط تصنيف + مطابقة الأنسجة والمركبات + محاكاة التجربة الأسموزية + ورقة عمل + اختبار</div>
+</header>
+
+<nav class="tabs">
+  <button class="tabBtn active" data-tab="tab-intro">📖 محتوى الدرس</button>
+  <button class="tabBtn" data-tab="tab-act">🔬 نشاط: صنّف المخلوق</button>
+  <button class="tabBtn" data-tab="tab-sim">🧬 طابق النسيج أو المركب</button>
+  <button class="tabBtn" data-tab="tab-osmosis">🥔 محاكاة: التجربة الأسموزية</button>
+  <button class="tabBtn" data-tab="tab-ws">📝 ورقة العمل</button>
+  <button class="tabBtn" data-tab="tab-quiz">✅ الاختبار</button>
+</nav>
+
+<main>
+
+  <!-- ===================== TAB 1: CONTENT ===================== -->
+  <section class="tab active" id="tab-intro">
+    <div class="card">
+      <h2 class="section-title">كيف اكتُشفت الخلايا؟</h2>
+      <p class="definition-box">تتكوَّن المخلوقات الحية جميعها من خلية أو أكثر. و<b>الخلية</b> هي الوحدة الأساسية للمخلوق الحي، وهي أصغر جزء قادر فيه على الحياة. ومعظم الخلايا لا يمكن مشاهدتها بالعين المجردة؛ لذلك كان اختراع المجهر بداية الطريق لتعرُّف الخلايا.</p>
+      <p class="definition-box">كان العالم الإنجليزي <b>روبرت هوك</b> أول من شاهد الخلية، وهو أول من أطلق عليها اسم الخلية. وفي عام ١٦٦٥م قام بصنع مجهر، واستخدمه لفحص شريحة رقيقة من الفلين، فاستطاع أن يشاهد جدران نسيج الفلين، ووصفها بأنها صناديق صغيرة متراصّة تُشبه خلايا النحل.</p>
+      <p class="definition-box">وجاء بعد روبرت هوك بوقت قصير تاجر هولندي يُدعى <b>أنتوني فان ليفنهوك</b>، كان أول من استطاع أن يُشاهد مخلوقات حية وحيدة الخلية بمجهر قام بصنعه، وكانت قوة تكبيره أكبر تسع مرات من قوة تكبير مجهر روبرت هوك.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">تطوُّر نظرية الخلية</h2>
+      <p class="definition-box">لاحظ ليفنهوك العديد من المخلوقات الحية بمجهره، وكان يرسم كل اكتشاف جديد يراه بالمجهر. وقد ازداد فهمنا لتركيب الخلية عبر السنين مع تقدُّم صناعة المجاهر وتحسينها.</p>
+      <p class="definition-box">وفي عام ١٨٣١م اكتشف العالم الإسكتلندي <b>روبرت براون</b> نواة الخلية النباتية. كذلك اهتمّ العالم الألماني <b>شلايدن</b> بدراسة خلايا النباتات تحت المجهر، وفي عام ١٨٣٨م استنتج أن جميع النباتات تتكوَّن من خلايا. وبعد سنة اكتشف <b>ثيودور شفان</b> أن جميع الحيوانات تتكوَّن من خلايا أيضًا. وقام العالمان براون وشفان معًا بوضع نظرية الخلية، مستعينين بأعمال ليفنهوك وهوك.</p>
+      <h3 class="sub-title">نظرية الخلية: ثلاث أفكار رئيسة</h3>
+      <div class="needs-grid">
+        <div class="need-card"><b>الفكرة الأولى</b><p>جميع المخلوقات الحية تتكوَّن من خلية أو أكثر</p></div>
+        <div class="need-card"><b>الفكرة الثانية</b><p>الخلايا هي الوحدة الأساسية للتركيب والوظيفة في المخلوقات الحية جميعها</p></div>
+        <div class="need-card"><b>الفكرة الثالثة</b><p>تنتج الخلايا عن خلايا موجودة</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">الخلايا والمخلوقات الحية</h2>
+      <p class="definition-box">المخلوقات الحية جميعها تتكوَّن من خلايا. وبعض المخلوقات الحية تتكوَّن أجسامها من خلية واحدة، وتُسمّى <b>مخلوقات وحيدة الخلية</b>، فالبكتيريا والبراميسيوم واليوجلينا جميعها مخلوقات وحيدة الخلية.</p>
+      <p class="definition-box">أما <b>المخلوقات العديدة الخلايا</b> فتتكوَّن أجسامها من ملايين الخلايا، وقد يحتوي بعضها على بلايين الخلايا التي تقوم بوظائف متخصِّصة. وجسم الإنسان أيضًا مكوَّن من خلايا مختلفة، تكوِّن الجلد والأعصاب والدم والعضلات.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">ما مستويات التنظيم في المخلوقات الحية؟</h2>
+      <p class="definition-box">تُشبه الخلايا إلى حدٍّ ما لَبِنات البناء، وتسمح مجموعة الخلايا معًا للمخلوق الحي بأداء جميع الوظائف الحيوية. يتكوَّن المخلوق الحي الوحيد الخلية من خلية واحدة تقوم بجميع الأنشطة الضرورية للبقاء على قيد الحياة والتكاثر. أما في المخلوقات المتعدِّدة الخلايا فتقوم كل خلية بوظيفة خاصة، وتقوم مجموعة الخلايا المتشابهة بالوظيفة نفسها معًا، وتُشكِّل <b>نسيجًا</b>.</p>
+      <div class="flow-wrap">
+        <div class="flow-stage" style="border-color:#b5468f;">🔬 خلية</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-stage" style="border-color:#4a90d9;">🧵 نسيج</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-stage" style="border-color:#e0a13c;">❤️ عضو</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-stage" style="border-color:#4cc98a;">🫀 جهاز حيوي</div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-stage" style="border-color:#20c3c3;">🧍 مخلوق حي</div>
+      </div>
+      <h3 class="sub-title">الأنسجة الأربعة الرئيسة في الحيوانات</h3>
+      <div class="needs-grid">
+        <div class="need-card"><b>النسيج العضلي</b><p>ألياف تحرِّك العظام وتضخّ الدم وتحرِّك المواد في الجهاز الهضمي</p></div>
+        <div class="need-card"><b>النسيج الضامّ</b><p>يشمل العظام والغضاريف والدهون والدم</p></div>
+        <div class="need-card"><b>النسيج العصبي</b><p>ينقل الرسائل في الجسم</p></div>
+        <div class="need-card"><b>النسيج الطلائي</b><p>يغطّي أجزاء الجسم الداخلية، وطبقة الجلد الخارجية</p></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">الأعضاء والأجهزة الحيوية</h2>
+      <p class="definition-box">تنتظم الأنسجة في أجسام المخلوقات الحية لتُشكِّل <b>الأعضاء</b>. والعضو مجموعة من نسيجين مختلفين أو أكثر تعمل معًا للقيام بوظيفة محدَّدة. والجلد أكبر عضو في جسم الإنسان، والقلب عضو آخر يعتمد في وظيفته على نسيج عضلي ونسيج عصبي ونسيج ضامّ. ومن الأمثلة الأخرى: الدماغ والعين والرئة.</p>
+      <p class="definition-box">وللنباتات أيضًا أعضاء، منها الجذر (امتصاص الماء والأملاح المعدنية)، والساق (دعم النبات وحمل الأوراق والأزهار)، والورقة (البناء الضوئي)، والزهرة (عضو التكاثر الجنسي في بعض النباتات).</p>
+      <p class="definition-box">تُشكِّل مجموعة الأعضاء التي تعمل معًا لأداء وظائف محدَّدة <b>جهازًا حيويًا</b>. فجهاز الدوران في جسم الإنسان يتكوَّن من القلب والأوعية الدموية والدم، ويقوم بنقل الأكسجين والمواد الغذائية إلى الخلايا، والتخلُّص من الفضلات.</p>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">ما المواد الموجودة في جميع المخلوقات الحية؟</h2>
+      <p class="definition-box">تتكوَّن جميع الأشياء من حولنا من جسيمات دقيقة تُسمّى <b>الذرات</b>. وهناك أكثر من ١٠٠ نوع من الذرات، ولكل نوع خصائصه. و<b>العنصر</b> مادّة نقية لا يمكن تجزئتها إلى موادّ أبسط منها، ويتكوَّن من نوع واحد من الذرات. ويمكن للعناصر أن تتَّحد لتكوِّن <b>المركَّبات</b>؛ فالمركَّب مادّة تتكوَّن باتّحاد كيميائي بين عنصرين أو أكثر.</p>
+      <h3 class="sub-title">مركّبات موجودة في جميع الخلايا</h3>
+      <div class="needs-grid">
+        <div class="need-card"><b>الكربوهيدرات</b><p>مكوَّنة من الكربون والهيدروجين والأكسجين، وتزوِّد الخلايا بالطاقة</p></div>
+        <div class="need-card"><b>الدهون</b><p>مكوَّنة من الكربون والهيدروجين والأكسجين، وتُختزن وتحرِّر طاقة أكبر من الكربوهيدرات</p></div>
+        <div class="need-card"><b>البروتينات</b><p>مكوَّنة من الكربون والهيدروجين والأكسجين والنيتروجين، ضرورية لنموّ الخلايا وتجديدها</p></div>
+        <div class="need-card"><b>الأحماض النووية</b><p>مكوَّنة من الأكسجين والكربون والهيدروجين والنيتروجين والفوسفور، تساعد على بناء البروتينات</p></div>
+      </div>
+      <p class="pie-legend">
+        <span class="pie-item"><span class="pie-dot" style="background:#3da5c9;"></span> الماء ٧٠٪</span>
+        <span class="pie-item"><span class="pie-dot" style="background:#9a7bd1;"></span> البروتينات ١٥٪</span>
+        <span class="pie-item"><span class="pie-dot" style="background:#e0873c;"></span> الدهون ١٠٪</span>
+        <span class="pie-item"><span class="pie-dot" style="background:#20c3c3;"></span> الأحماض النووية ٤٪</span>
+        <span class="pie-item"><span class="pie-dot" style="background:#d9534f;"></span> الكربوهيدرات ١٪</span>
+      </p>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">ماذا تعلمنا؟</h2>
+      <div class="needs-grid">
+        <div class="need-card"><b>الخلية</b><p>أصغر وحدة حية، اكتشفها هوك وليفنهوك</p></div>
+        <div class="need-card"><b>نظرية الخلية</b><p>ثلاث أفكار: تكوّن الخلايا، وحدة التركيب والوظيفة، وتكاثر الخلايا</p></div>
+        <div class="need-card"><b>مستويات التنظيم</b><p>خلية، نسيج، عضو، جهاز حيوي، مخلوق حي</p></div>
+        <div class="need-card"><b>المركّبات الحيوية</b><p>كربوهيدرات، دهون، بروتينات، أحماض نووية</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 2: CLASSIFICATION ACTIVITY ===================== -->
+  <section class="tab" id="tab-act">
+    <div class="card">
+      <h2 class="section-title">نشاط: صنّف المخلوقات الحية الآتية حسب عدد خلاياها</h2>
+      <p class="hint">اضغط على اسم المخلوق، ثم اضغط على النوع الصحيح له.</p>
+      <div class="chips" id="orgPool"></div>
+      <div class="zones" id="orgZones">
+        <div class="zone" data-zone="unicell"><h4>🦠 وحيد الخلية</h4><div class="items"></div></div>
+        <div class="zone" data-zone="multicell"><h4>🌳 عديد الخلايا</h4><div class="items"></div></div>
+      </div>
+      <div class="sortStatus" id="orgStatus"></div>
+      <button class="action-btn" id="resetOrg" style="margin-top:10px;">إعادة النشاط</button>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">أستنتج</h2>
+      <p style="margin:0 0 10px;">لماذا يحتاج جسم الإنسان إلى أعضاء وأجهزة حيوية متخصّصة، بينما يكتفي المخلوق وحيد الخلية بخلية واحدة؟</p>
+      <button class="action-btn" id="showConcludeBtn">عرض الاستنتاج</button>
+      <div class="feedback-box" id="concludeBox">
+        لأن المخلوق وحيد الخلية صغير جدًا، وتستطيع خليته الواحدة أن تقوم بجميع العمليات الضرورية للحياة بمفردها (كالتغذية والتنفس والتخلص من الفضلات). أما جسم الإنسان فمكوّن من ملايين الخلايا التي تتخصص كل مجموعة منها بوظيفة معينة (نسيج)، وتتعاون هذه الأنسجة في أعضاء، وتتعاون الأعضاء في أجهزة حيوية؛ لأن حجم الجسم الكبير وتعقيد وظائفه يحتاجان إلى تقسيم العمل بين خلايا متخصصة حتى تؤدَّى جميع الوظائف الحيوية بكفاءة.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 3: TISSUE/COMPOUND MATCHING ===================== -->
+  <section class="tab" id="tab-sim">
+    <div class="card">
+      <h2 class="section-title">طابق كل عبارة بالنسيج أو المركّب المناسب لها</h2>
+      <p class="hint">اضغط على العبارة، ثم اضغط على النسيج أو المركّب المناسب لها.</p>
+      <div class="chips" id="propPool"></div>
+      <div class="zones" id="propZones">
+        <div class="zone" data-zone="muscle"><h4>💪 النسيج العضلي</h4><div class="items"></div></div>
+        <div class="zone" data-zone="connective"><h4>🦴 النسيج الضامّ</h4><div class="items"></div></div>
+        <div class="zone" data-zone="nerve"><h4>🧠 النسيج العصبي</h4><div class="items"></div></div>
+        <div class="zone" data-zone="epithelial"><h4>🩹 النسيج الطلائي</h4><div class="items"></div></div>
+        <div class="zone" data-zone="carb"><h4>🍚 الكربوهيدرات</h4><div class="items"></div></div>
+        <div class="zone" data-zone="protein"><h4>🥩 البروتينات</h4><div class="items"></div></div>
+      </div>
+      <div class="sortStatus" id="propStatus"></div>
+      <button class="action-btn" id="resetProp" style="margin-top:10px;">إعادة النشاط</button>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 4: OSMOSIS SIMULATION ===================== -->
+  <section class="tab" id="tab-osmosis">
+    <div class="card">
+      <h2 class="section-title">محاكاة: تجربة الخاصية الأسموزية في شرائح البطاطس</h2>
+      <p class="definition-box">يحيط بكل خلية غشاء رقيق يسمح للغذاء بالدخول إليها، ويسمح للفضلات بالخروج منها. في هذه المحاكاة سنستعرض تجربة "أجرِّب" الموجودة في كتابك: نضع شريحتَي بطاطس متماثلتين في قطرهما، إحداهما في كأس ماء عذب، والأخرى في كأس ماء مالح، ثم نراقب ماذا يحدث لقطر كل شريحة بعد ٢٠ دقيقة وبعد ٢٤ ساعة.</p>
+      <p class="hint">اضغط "ابدأ التجربة" لمشاهدة ما يحدث لكل شريحة بمرور الوقت بفعل الخاصية الأسموزية.</p>
+
+      <div class="sim-stage-label" id="simStageLabel">⏱️ الوقت: في البداية (٣٠ ملم لكل شريحة)</div>
+      <div class="sim-wrap">
+        <div class="beaker">
+          <div class="beaker-label">💧 ماء عذب</div>
+          <div class="beaker-svg-wrap">
+            <div class="potato-slice" id="freshSlice" style="width:70px; height:70px;">٣٠ ملم</div>
+          </div>
+          <div class="sim-readout">القطر الحالي: <b id="freshReadout">٣٠ ملم</b></div>
+        </div>
+        <div class="beaker">
+          <div class="beaker-label">🧂 ماء مالح</div>
+          <div class="beaker-svg-wrap">
+            <div class="potato-slice" id="saltSlice" style="width:70px; height:70px;">٣٠ ملم</div>
+          </div>
+          <div class="sim-readout">القطر الحالي: <b id="saltReadout">٣٠ ملم</b></div>
+        </div>
+      </div>
+
+      <div class="sim-controls">
+        <button class="action-btn" id="simStartBtn">▶️ ابدأ التجربة</button>
+        <button class="action-btn" id="simResetBtn" style="background:var(--accent2);">🔄 إعادة التجربة</button>
+      </div>
+
+      <table class="simtable" id="simTable">
+        <tr><th>وقت القياس</th><th>قطر شريحة الماء العذب</th><th>قطر شريحة الماء المالح</th></tr>
+        <tr><td>في البداية</td><td>٣٠ ملم</td><td>٣٠ ملم</td></tr>
+        <tr><td>بعد ٢٠ دقيقة</td><td id="freshRow20">—</td><td id="saltRow20">—</td></tr>
+        <tr><td>بعد ٢٤ ساعة</td><td id="freshRow24">—</td><td id="saltRow24">—</td></tr>
+      </table>
+
+      <div class="feedback-box" id="simConclusionBox">
+        <b>الاستنتاج:</b> تحرَّك الماء بالخاصية الأسموزية من منطقة تركيز الأملاح فيها منخفض إلى منطقة تركيز الأملاح فيها مرتفع. ففي الكأس ذي الماء المالح، خرج الماء من خلايا شريحة البطاطس إلى الماء المالح المحيط بها (تركيز الأملاح خارج الخلايا أعلى)، فانكمشت الشريحة وقلّ قطرها. أما في الكأس ذي الماء العذب، فقد دخل الماء إلى خلايا الشريحة أو بقي قطرها شبه ثابت؛ لأن تركيز الأملاح في الماء المحيط بها منخفض.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">فكِّر</h2>
+      <p style="margin:0;">ماذا لو استعملنا ماءً وسكرًا بدلًا من الماء المالح؟ هل تتوقّع حدوث النتيجة نفسها على شريحة البطاطس؟ ولماذا؟</p>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 5: WORKSHEET ===================== -->
+  <section class="tab" id="tab-ws">
+    <div class="card">
+      <h2 class="section-title">ورقة عمل</h2>
+      <p class="hint">أكمل الأسئلة، ثم اضغط "إظهار الإجابات" للتحقق.</p>
+
+      <div class="ws-q">
+        <label>١) أكمل الفراغ: (الخلية - النسيج - العضو - نظرية الخلية)</label>
+        <p>أ) أصغر جزء من المخلوق الحي قادر على القيام بجميع العمليات الضرورية للحياة يُسمّى .....</p><input type="text">
+        <p style="margin-top:10px;">ب) مجموعة من الخلايا المتشابهة التي تؤدّي الوظيفة نفسها تُسمّى .....</p><input type="text">
+        <p style="margin-top:10px;">ج) مجموعة من نسيجين مختلفين أو أكثر تعمل معًا للقيام بوظيفة محدَّدة تُسمّى .....</p><input type="text">
+        <p style="margin-top:10px;">د) الفكرة العلمية التي تنصّ على أن جميع المخلوقات الحية تتكوَّن من خلية أو أكثر تُسمّى .....</p><input type="text">
+      </div>
+
+      <div class="ws-q">
+        <label>٢) صنّف المخلوقات الآتية: (البكتيريا - الإنسان - البراميسيوم - شجرة)</label>
+        <table class="match">
+          <tr><th>المخلوق الحي</th><th>نوعه</th></tr>
+          <tr><td>البكتيريا</td><td></td></tr>
+          <tr><td>الإنسان</td><td></td></tr>
+          <tr><td>البراميسيوم</td><td></td></tr>
+          <tr><td>شجرة</td><td></td></tr>
+        </table>
+      </div>
+
+      <div class="ws-q">
+        <label>٣) في تجربة شرائح البطاطس، ماذا حدث لقطر الشريحة الموضوعة في الماء المالح؟ ولماذا؟</label>
+        <textarea></textarea>
+      </div>
+
+      <button class="reveal-btn" id="revealBtn">إظهار الإجابات النموذجية</button>
+      <button class="print-btn" id="printBtn">🖨️ طباعة الورقة</button>
+      <div class="answers" id="answersBox">
+        <b>الإجابات النموذجية:</b>
+        <p>١) أ) الخلية &nbsp; ب) النسيج &nbsp; ج) العضو &nbsp; د) نظرية الخلية</p>
+        <p>٢) البكتيريا: وحيد الخلية — الإنسان: عديد الخلايا — البراميسيوم: وحيد الخلية — شجرة: عديدة الخلايا</p>
+        <p>٣) قلّ قطر شريحة البطاطس الموضوعة في الماء المالح؛ لأن الماء تحرَّك بالخاصية الأسموزية من داخل خلايا الشريحة (حيث تركيز الأملاح منخفض) إلى الماء المالح المحيط بها (حيث تركيز الأملاح مرتفع)، فخرج الماء من الخلايا وانكمشت الشريحة.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== TAB 6: QUIZ ===================== -->
+  <section class="tab" id="tab-quiz">
+    <div class="card" id="quizArea">
+      <div class="progressbar"><div id="progressFill"></div></div>
+      <div class="qcount" id="qCount"></div>
+      <h3 id="qText"></h3>
+      <div id="optsWrap"></div>
+      <div id="quizFeedback"></div>
+      <button class="action-btn" id="nextBtn">السؤال التالي ←</button>
+    </div>
+    <div class="card" id="scoreScreen">
+      <h2 class="section-title">انتهى الاختبار! 🎉</h2>
+      <div class="big" id="scoreBig"></div>
+      <p id="scoreMsg"></p>
+      <button class="action-btn" id="restartBtn">إعادة الاختبار</button>
+    </div>
+  </section>
+
+</main>
+
+<script>
+document.querySelectorAll('.tabBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabBtn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('section.tab').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+function shuffle(arr){ return arr.slice().sort(()=>Math.random()-0.5); }
+
+document.getElementById('showConcludeBtn').addEventListener('click', ()=>{
+  document.getElementById('concludeBox').classList.add('show');
+});
+
+/* ---------------- TAB2: unicellular/multicellular sorting ---------------- */
+const orgItems = [
+  {id:'bacteria', name:'البكتيريا 🦠', cat:'unicell'},
+  {id:'paramecium', name:'البراميسيوم 🔬', cat:'unicell'},
+  {id:'euglena', name:'اليوجلينا 🟢', cat:'unicell'},
+  {id:'human', name:'الإنسان 🧍', cat:'multicell'},
+  {id:'tree', name:'شجرة 🌳', cat:'multicell'},
+  {id:'fish', name:'سمكة 🐟', cat:'multicell'},
+  {id:'bird', name:'طائر 🐦', cat:'multicell'},
+];
+let selOrg = null, orgPlaced=0, orgCorrect=0;
+function buildOrgSort(){
+  orgPlaced=0; orgCorrect=0;
+  document.getElementById('orgStatus').textContent='';
+  document.querySelectorAll('#orgZones .items').forEach(z=> z.innerHTML='');
+  const pool = document.getElementById('orgPool'); pool.innerHTML='';
+  shuffle(orgItems).forEach(item=>{
+    const chip = document.createElement('div'); chip.className='chip'; chip.textContent=item.name; chip.dataset.id=item.id;
+    chip.addEventListener('click', ()=>{
+      if(chip.classList.contains('placed')) return;
+      document.querySelectorAll('#orgPool .chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected'); selOrg = item;
+    });
+    pool.appendChild(chip);
+  });
+}
+buildOrgSort();
+document.querySelectorAll('#orgZones .zone').forEach(zone=>{
+  zone.addEventListener('click', ()=>{
+    if(!selOrg) return;
+    const chipEl = [...document.querySelectorAll('#orgPool .chip')].find(c=>c.dataset.id===selOrg.id && !c.classList.contains('placed'));
+    if(!chipEl) return;
+    const correct = selOrg.cat === zone.dataset.zone;
+    const tag = document.createElement('div'); tag.className='placedItem ' + (correct?'correct':'wrong'); tag.textContent = selOrg.name + (correct?' ✓':' ✗');
+    zone.querySelector('.items').appendChild(tag);
+    chipEl.classList.add('placed'); orgPlaced++; if(correct) orgCorrect++;
+    selOrg = null;
+    if(orgPlaced === orgItems.length){ document.getElementById('orgStatus').textContent = 'النتيجة: ' + orgCorrect + ' من ' + orgItems.length + ' 🎉'; }
+  });
+});
+document.getElementById('resetOrg').addEventListener('click', buildOrgSort);
+
+/* ---------------- TAB3: tissue/compound matching ---------------- */
+const propItems = [
+  {id:'p1', name:'يتكوَّن من ألياف تحرِّك العظام وتضخّ الدم', cat:'muscle'},
+  {id:'p2', name:'من الأمثلة عليه العضلات التي تحرِّك أجزاء الجسم', cat:'muscle'},
+  {id:'p3', name:'يشمل العظام والغضاريف والدهون والدم', cat:'connective'},
+  {id:'p4', name:'الغضاريف والدهون من أمثلته', cat:'connective'},
+  {id:'p5', name:'ينقل الرسائل في الجسم', cat:'nerve'},
+  {id:'p6', name:'يتكوَّن منه الدماغ والأعصاب', cat:'nerve'},
+  {id:'p7', name:'يغطّي أجزاء الجسم الداخلية والخارجية', cat:'epithelial'},
+  {id:'p8', name:'يبطّن باطن الخدّ والجهاز الهضمي', cat:'epithelial'},
+  {id:'p9', name:'مركَّب يزوِّد الخلايا بالطاقة، مكوَّن من الكربون والهيدروجين والأكسجين', cat:'carb'},
+  {id:'p10', name:'يوفِّر الطاقة السريعة للخلايا', cat:'carb'},
+  {id:'p11', name:'ضرورية لنموّ الخلايا وتجديدها، تحتوي على النيتروجين', cat:'protein'},
+  {id:'p12', name:'مكوَّنة من الكربون والهيدروجين والأكسجين والنيتروجين', cat:'protein'},
+];
+let selProp = null, propPlaced=0, propCorrect=0;
+function buildPropSort(){
+  propPlaced=0; propCorrect=0;
+  document.getElementById('propStatus').textContent='';
+  document.querySelectorAll('#propZones .items').forEach(z=> z.innerHTML='');
+  const pool = document.getElementById('propPool'); pool.innerHTML='';
+  shuffle(propItems).forEach(item=>{
+    const chip = document.createElement('div'); chip.className='chip'; chip.textContent=item.name; chip.dataset.id=item.id;
+    chip.addEventListener('click', ()=>{
+      if(chip.classList.contains('placed')) return;
+      document.querySelectorAll('#propPool .chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected'); selProp = item;
+    });
+    pool.appendChild(chip);
+  });
+}
+buildPropSort();
+document.querySelectorAll('#propZones .zone').forEach(zone=>{
+  zone.addEventListener('click', ()=>{
+    if(!selProp) return;
+    const chipEl = [...document.querySelectorAll('#propPool .chip')].find(c=>c.dataset.id===selProp.id && !c.classList.contains('placed'));
+    if(!chipEl) return;
+    const correct = selProp.cat === zone.dataset.zone;
+    const tag = document.createElement('div'); tag.className='placedItem ' + (correct?'correct':'wrong'); tag.textContent = (correct?'✓':'✗');
+    tag.title = selProp.name;
+    zone.querySelector('.items').appendChild(tag);
+    chipEl.classList.add('placed'); propPlaced++; if(correct) propCorrect++;
+    selProp = null;
+    if(propPlaced === propItems.length){ document.getElementById('propStatus').textContent = 'النتيجة: ' + propCorrect + ' من ' + propItems.length + ' 🎉'; }
+  });
+});
+document.getElementById('resetProp').addEventListener('click', buildPropSort);
+
+/* ---------------- TAB4: OSMOSIS SIMULATION ---------------- */
+const simStages = [
+  { label: '⏱️ الوقت: في البداية (٣٠ ملم لكل شريحة)', fresh: 30, salt: 30 },
+  { label: '⏱️ الوقت: بعد ٢٠ دقيقة', fresh: 31, salt: 27 },
+  { label: '⏱️ الوقت: بعد ٢٤ ساعة', fresh: 32, salt: 21 },
+];
+let simIndex = 0;
+function mmToPx(mm){ return 40 + mm * 1.6; } // visual scaling for the circle size
+function renderSimStage(idx){
+  const stage = simStages[idx];
+  document.getElementById('simStageLabel').textContent = stage.label;
+  const freshSlice = document.getElementById('freshSlice');
+  const saltSlice = document.getElementById('saltSlice');
+  const freshPx = mmToPx(stage.fresh);
+  const saltPx = mmToPx(stage.salt);
+  freshSlice.style.width = freshPx + 'px'; freshSlice.style.height = freshPx + 'px';
+  saltSlice.style.width = saltPx + 'px'; saltSlice.style.height = saltPx + 'px';
+  freshSlice.textContent = stage.fresh + ' ملم';
+  saltSlice.textContent = stage.salt + ' ملم';
+  document.getElementById('freshReadout').textContent = stage.fresh + ' ملم';
+  document.getElementById('saltReadout').textContent = stage.salt + ' ملم';
+  if(idx >= 1){
+    document.getElementById('freshRow20').textContent = simStages[1].fresh + ' ملم';
+    document.getElementById('saltRow20').textContent = simStages[1].salt + ' ملم';
+  }
+  if(idx >= 2){
+    document.getElementById('freshRow24').textContent = simStages[2].fresh + ' ملم';
+    document.getElementById('saltRow24').textContent = simStages[2].salt + ' ملم';
+  }
+}
+renderSimStage(0);
+document.getElementById('simStartBtn').addEventListener('click', ()=>{
+  if(simIndex >= simStages.length - 1) return;
+  simIndex++;
+  renderSimStage(simIndex);
+  if(simIndex === simStages.length - 1){
+    document.getElementById('simStartBtn').textContent = '✅ اكتملت التجربة';
+    document.getElementById('simStartBtn').disabled = true;
+  } else {
+    document.getElementById('simStartBtn').textContent = '▶️ التالي: بعد ٢٤ ساعة';
+  }
+});
+document.getElementById('simResetBtn').addEventListener('click', ()=>{
+  simIndex = 0;
+  renderSimStage(0);
+  document.getElementById('freshRow20').textContent='—'; document.getElementById('saltRow20').textContent='—';
+  document.getElementById('freshRow24').textContent='—'; document.getElementById('saltRow24').textContent='—';
+  document.getElementById('simStartBtn').textContent = '▶️ ابدأ التجربة';
+  document.getElementById('simStartBtn').disabled = false;
+});
+
+/* ---------------- TAB5: worksheet ---------------- */
+document.getElementById('revealBtn').addEventListener('click', ()=>{ document.getElementById('answersBox').classList.toggle('show'); });
+document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+
+/* ---------------- TAB6: quiz ---------------- */
+const questions = [
+  {type:'mcq', q:'الوحدة الأساسية للمخلوق الحي، وأصغر جزء قادر على الحياة، تُسمّى:', opts:['النسيج', 'الخلية', 'العضو'], correct:1},
+  {type:'mcq', q:'أول من أطلق اسم "الخلية" على ما شاهده تحت المجهر هو:', opts:['ليفنهوك', 'روبرت هوك', 'شفان'], correct:1},
+  {type:'mcq', q:'أول من شاهد مخلوقات حية وحيدة الخلية بمجهر صنعه بنفسه هو:', opts:['روبرت براون', 'ليفنهوك', 'شلايدن'], correct:1},
+  {type:'tf', q:'تنصّ نظرية الخلية على أن الخلايا تنتج عن خلايا موجودة.', correct:true},
+  {type:'mcq', q:'مجموعة من الخلايا المتشابهة تؤدّي الوظيفة نفسها تُسمّى:', opts:['عضوًا', 'نسيجًا', 'جهازًا حيويًا'], correct:1},
+  {type:'mcq', q:'القلب مثال على:', opts:['نسيج', 'عضو', 'جهاز حيوي فقط'], correct:1},
+  {type:'tf', q:'الكربوهيدرات مركَّبات تزوِّد الخلايا بالطاقة.', correct:true},
+  {type:'mcq', q:'المركَّب الذي يحتوي على النيتروجين، وهو ضروري لنموّ الخلايا وتجديدها، هو:', opts:['الكربوهيدرات', 'البروتينات', 'الدهون'], correct:1},
+  {type:'mcq', q:'يُشكِّل الماء في خلايا الإنسان نحو:', opts:['١٥٪', '٧٠٪', '٤٪'], correct:1},
+  {type:'match', q:'صل كل مثال بمستوى التنظيم المناسب له:', items:[
+      {name:'خلية دم', options:['خلية', 'عضو', 'جهاز حيوي'], correct:0},
+      {name:'القلب', options:['خلية', 'عضو', 'جهاز حيوي'], correct:1},
+      {name:'جهاز الدوران', options:['خلية', 'عضو', 'جهاز حيوي'], correct:2},
+    ]},
+];
+let qIndex = 0, score = 0;
+
+function renderQuestion(){
+  const q = questions[qIndex];
+  document.getElementById('qCount').textContent = 'السؤال ' + (qIndex+1) + ' من ' + questions.length;
+  document.getElementById('progressFill').style.width = ((qIndex)/questions.length*100) + '%';
+  document.getElementById('qText').textContent = q.q;
+  document.getElementById('quizFeedback').textContent=''; document.getElementById('quizFeedback').className='';
+  document.getElementById('nextBtn').style.display='none';
+  const wrap = document.getElementById('optsWrap'); wrap.innerHTML='';
+
+  if(q.type==='mcq' || q.type==='tf'){
+    const options = q.type==='tf' ? ['صح','خطأ'] : q.opts;
+    options.forEach((optText, idx)=>{
+      const btn = document.createElement('button'); btn.className='opt'; btn.textContent=optText;
+      btn.addEventListener('click', ()=> handleChoice(idx, btn));
+      wrap.appendChild(btn);
+    });
+  } else if(q.type==='match'){
+    q.items.forEach((item,i)=>{
+      const row = document.createElement('div'); row.style.cssText='margin-bottom:12px; padding:10px 12px; background:var(--surface); border-radius:10px;';
+      const label = document.createElement('div'); label.style.cssText='font-weight:bold; margin-bottom:6px; font-size:14px; color:var(--ink);'; label.textContent=item.name;
+      row.appendChild(label);
+      item.options.forEach((optText, idx)=>{
+        const optBtn = document.createElement('button'); optBtn.className='opt';
+        optBtn.style.cssText='display:inline-block; width:auto; margin:0 6px 6px 0; padding:8px 14px;';
+        optBtn.textContent = optText; optBtn.dataset.idx = idx;
+        optBtn.addEventListener('click', ()=>{
+          row.querySelectorAll('.opt').forEach(b=>{ b.classList.remove('selected-match'); b.style.borderColor='var(--line)'; });
+          optBtn.classList.add('selected-match'); optBtn.style.borderColor='var(--accent)';
+        });
+        row.appendChild(optBtn);
+      });
+      wrap.appendChild(row);
+    });
+    const checkBtn = document.createElement('button'); checkBtn.className='action-btn'; checkBtn.textContent='تحقّق من الإجابات';
+    checkBtn.addEventListener('click', ()=> handleMatch(wrap, checkBtn));
+    wrap.appendChild(checkBtn);
+  }
+}
+function finishFeedback(isCorrect){
+  const fb = document.getElementById('quizFeedback');
+  if(isCorrect){ fb.textContent='إجابة صحيحة! ✓'; fb.className='good'; score++; }
+  else { fb.textContent='إجابة غير صحيحة ✗'; fb.className='bad'; }
+  document.getElementById('nextBtn').style.display='inline-block';
+}
+function handleChoice(idx, btnEl){
+  const q = questions[qIndex];
+  const isCorrect = q.type==='tf' ? (idx===0)===q.correct : idx===q.correct;
+  document.querySelectorAll('#optsWrap .opt').forEach(b=> b.disabled=true);
+  const correctIdx = q.type==='tf' ? (q.correct?0:1) : q.correct;
+  document.querySelectorAll('#optsWrap .opt')[correctIdx].classList.add('correct');
+  if(!isCorrect) btnEl.classList.add('wrong');
+  finishFeedback(isCorrect);
+}
+function handleMatch(wrap, btnEl){
+  const q = questions[qIndex];
+  const rows = wrap.querySelectorAll('div');
+  let allCorrect = true;
+  q.items.forEach((item,i)=>{
+    const row = rows[i]; const selected = row.querySelector('.selected-match'); const opts = row.querySelectorAll('.opt');
+    opts.forEach(o=> o.disabled=true);
+    if(!selected || parseInt(selected.dataset.idx) !== item.correct){ allCorrect=false; if(selected) selected.classList.add('wrong'); }
+    else { selected.classList.add('correct'); }
+    opts[item.correct].classList.add('correct');
+  });
+  btnEl.disabled = true;
+  finishFeedback(allCorrect);
+}
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  qIndex++;
+  if(qIndex < questions.length){ renderQuestion(); } else { showScore(); }
+});
+function showScore(){
+  document.getElementById('quizArea').style.display='none';
+  document.getElementById('scoreScreen').style.display='block';
+  const pct = Math.round(score/questions.length*100);
+  document.getElementById('scoreBig').textContent = score + ' / ' + questions.length + ' (' + pct + '%)';
+  let msg = pct>=80 ? 'ممتاز! فهم رائع للدرس 🌟' : pct>=50 ? 'جيد، راجع بعض النقاط وحاول مرة أخرى 💪' : 'يُنصح بمراجعة الدرس ثم إعادة الاختبار 📘';
+  document.getElementById('scoreMsg').textContent = msg;
+}
+document.getElementById('restartBtn').addEventListener('click', ()=>{
+  qIndex=0; score=0;
+  document.getElementById('scoreScreen').style.display='none';
+  document.getElementById('quizArea').style.display='block';
+  renderQuestion();
+});
+renderQuestion();
+</script>
+
+</body>
+</html>
